@@ -1,8 +1,10 @@
 """Write a Book to TXT, EPUB or MOBI."""
 
 import html
+import os
 import shutil
 import subprocess
+import sys
 import tempfile
 import uuid
 from pathlib import Path
@@ -56,7 +58,22 @@ def write_mobi(book: Book, out: Path) -> None:
     with tempfile.TemporaryDirectory() as tmp:
         tmp_epub = Path(tmp) / "book.epub"
         write_epub(book, tmp_epub)
-        subprocess.run([converter, str(tmp_epub), str(out)], check=True, capture_output=True)
+        result = subprocess.run(
+            [converter, str(tmp_epub), str(out)], capture_output=True, text=True, env=env_without_venv()
+        )
+    if result.returncode != 0:
+        raise RuntimeError(f"ebook-convert failed:\n{result.stderr.strip() or result.stdout[-2000:]}")
+
+
+def env_without_venv() -> dict[str, str]:
+    # ebook-convert runs via `#!/usr/bin/env python3`; with our virtualenv on
+    # PATH it would pick up our Python instead of the one Calibre was built for.
+    env = os.environ.copy()
+    if sys.prefix != sys.base_prefix:
+        venv_bin = str(Path(sys.prefix) / "bin")
+        env["PATH"] = os.pathsep.join(p for p in env.get("PATH", "").split(os.pathsep) if p != venv_bin)
+        env.pop("VIRTUAL_ENV", None)
+    return env
 
 
 WRITERS = {"txt": write_txt, "epub": write_epub, "mobi": write_mobi}

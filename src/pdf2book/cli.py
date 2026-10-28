@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 
 from .extract import extract
+from .validate import format_report, validate
 from .writers import WRITERS
 
 
@@ -12,6 +13,7 @@ def main() -> None:
     parser.add_argument("-f", "--format", choices=WRITERS, default="epub", help="output format (default: epub)")
     parser.add_argument("-o", "--output", type=Path, help="output file (default: input name with new extension)")
     parser.add_argument("--no-cover", action="store_true", help="don't use the first page as the cover image")
+    parser.add_argument("--no-check", action="store_true", help="skip the quality report after converting")
     args = parser.parse_args()
 
     if not args.pdf.is_file():
@@ -24,6 +26,9 @@ def main() -> None:
     except RuntimeError as e:
         sys.exit(f"error: {e}")
     print(f"Wrote {out} ({len(book.chapters)} chapters)")
+    if not args.no_check:
+        print()
+        print(format_report(validate(book, out, args.format)))
 
 
 if __name__ == "__main__":

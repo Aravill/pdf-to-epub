@@ -27,6 +27,10 @@ class Book:
     author: str
     chapters: list[Chapter]
     cover_png: bytes | None = None
+    page_count: int = 0
+    # 0-based pages that hold images but no text (scans, illustrations).
+    image_only_pages: list[int] = field(default_factory=list)
+    from_bookmarks: bool = False
 
 
 @dataclass
@@ -124,5 +128,10 @@ def extract(pdf_path: Path, *, with_cover: bool = True) -> Book:
     else:
         chapters.append(Chapter(title, 1, _paragraphs(doc, 0, doc.page_count)))
 
+    image_only = [
+        page.number
+        for page in doc
+        if not PAGE_NUMBER_RE.sub("", page.get_text()).strip() and page.get_images()
+    ]
     cover = _render_cover(doc) if with_cover and doc.page_count else None
-    return Book(title, author, chapters, cover)
+    return Book(title, author, chapters, cover, doc.page_count, image_only, bool(toc))
