@@ -1,0 +1,6 @@
+example/
+*.pdf
+*.epub
+*.mobi
+__pycache__/
+.venv/

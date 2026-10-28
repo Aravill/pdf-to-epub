@@ -1,0 +1,20 @@
+[project]
+name = "pdf2book"
+version = "0.1.0"
+description = "Convert PDF files to TXT, EPUB or MOBI"
+readme = "README.md"
+authors = [
+    { name = "Michal Mozik", email = "mozikmichal@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "ebooklib>=0.20",
+    "pymupdf>=2.0",
+]
+
+[project.scripts]
+pdf2book = "pdf2book.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.12.10,<0.13.0"]
+build-backend = "uv_build"
