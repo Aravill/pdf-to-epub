@@ -13,6 +13,14 @@ from ebooklib import epub
 
 from .extract import Book
 
+# Printed-book layout: indented paragraphs with no gap between them. Without
+# a stylesheet readers use web defaults, which leave a blank line after each one.
+BOOK_CSS = """
+p { margin: 0; text-indent: 1.5em; text-align: justify; }
+h1 + p, h2 + p, h3 + p, h4 + p, h5 + p, h6 + p { text-indent: 0; }
+h1, h2, h3, h4, h5, h6 { text-align: center; margin: 2em 0 1.5em; page-break-before: always; }
+"""
+
 
 def write_txt(book: Book, out: Path) -> None:
     parts = [f"{book.title}\n{book.author}\n"]
@@ -30,6 +38,8 @@ def write_epub(book: Book, out: Path) -> None:
     eb.add_author(book.author)
     if book.cover_png:
         eb.set_cover("cover.png", book.cover_png)
+    style = epub.EpubItem(uid="style", file_name="style.css", media_type="text/css", content=BOOK_CSS)
+    eb.add_item(style)
 
     items = []
     for i, chapter in enumerate(book.chapters, start=1):
@@ -37,6 +47,7 @@ def write_epub(book: Book, out: Path) -> None:
         body = "".join(f"<p>{html.escape(p)}</p>" for p in chapter.paragraphs)
         item = epub.EpubHtml(title=chapter.title, file_name=f"chapter_{i:04d}.xhtml", lang="en")
         item.content = f"<h{heading}>{html.escape(chapter.title)}</h{heading}>{body}"
+        item.add_item(style)
         eb.add_item(item)
         items.append(item)
 
